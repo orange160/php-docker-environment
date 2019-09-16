@@ -1,0 +1,63 @@
+version: '2'
+
+services:
+  nginx:
+    depends_on:
+      - "php"
+    image: "nginx"
+    volumes:
+      - "$PWD/nginx/conf.d:/etc/nginx/conf.d"
+      - "$PWD/nginx/log:/var/log/nginx"
+      - "$PWD/www:/usr/share/nginx/html"
+    ports:
+      - "8888:80"
+      - "8889:8080"
+    networks:
+      - oa-network
+    container_name: "oa-nginx"
+    command: /bin/bash -c "mkdir -p /var/www && ln -sf /usr/share/nginx/html /var/www && nginx -g 'daemon off;'"
+
+  php:
+    image: "php-fpm"
+    build:  
+      context: ./php
+      dockerfile: "Dockerfile.php"
+    container_name: "oa-php-fpm"
+    volumes:
+      - "$PWD/www:/var/www/html"
+      - "$PWD/supervisor/conf.d:/etc/supervisor/conf.d"
+      - "$PWD/supervisor/log:/etc/supervisor.d/log"
+      - "$PWD/php/php.ini:/usr/local/etc/php/php.ini:ro"
+    networks:
+      - oa-network
+    links:
+      - mysql
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - "$PWD/db_data:/var/lib/mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PD} 
+      MYSQL_DATABASE: simpleDemo
+      #   MYSQL_USER: oa
+      #   MYSQL_PASSWORD: oa123
+    ports:
+      - "3306:3306"
+    networks:
+      - oa-network
+    container_name: "oa-mysql"
+
+  redis:
+    image: "redis"
+    ports:
+      - "6379:6379"
+    volumes:
+      - "$PWD/redis/redis.conf:/usr/local/etc/redis/redis.conf"
+    networks:
+      - oa-network
+    container_name: "oa-redis"
+
+networks:
+  oa-network:
+    driver: bridge

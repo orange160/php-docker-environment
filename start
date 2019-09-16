@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+docker-compose rm -sf
+#docker-compose up -d
+docker-compose up -d
+
+echo -e "\n ======== status ===========  \n"
+docker-compose ps
